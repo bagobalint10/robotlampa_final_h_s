@@ -101,6 +101,8 @@ uint32_t tim_5_get_value(void);
 #define MOTOR_7_B_GPIO_Port GPIOA
 #define MOTOR_7_A_Pin GPIO_PIN_15
 #define MOTOR_7_A_GPIO_Port GPIOA
+#define TEST_OUT_Pin GPIO_PIN_4
+#define TEST_OUT_GPIO_Port GPIOB
 #define MOTOR_6_B_Pin GPIO_PIN_6
 #define MOTOR_6_B_GPIO_Port GPIOB
 #define MOTOR_6_A_Pin GPIO_PIN_7

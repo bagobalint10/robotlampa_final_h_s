@@ -7,11 +7,12 @@
 
 //#include <control_board_s.h>
 #include <my_main.h>
-
+#include "main.h"
 #include <dmx_usart_s.h>
-//#include <motor_1_drive_s.h>
+#include <motor_drive_h_s.h>
 //#include <motor_2_drive_s.h>
-
+#define MAX_POS 100000UL
+MOTOR_TypeDef Motor_1 = {0};
 /*
 #define	PAN_CH 11
 #define	PAN_F_CH 12
@@ -84,10 +85,31 @@ static void dmx_signal_smoothing(void)
 void my_main_init(void)
 {
 	//control_board_init();
+
+
+	// Motor_1 kalibrációs értékei
+	Motor_1.max_speed_level = 30000;	// ez majd lehet nem kell -- ideiglenesen
+	Motor_1.current_pos = MAX_POS;		// indulásnál max érték
+	Motor_1.n_max = 30000; 				// min 8000 - max 30000
+	Motor_1.v_max = 80.0f; 				// min 20 - max 80
+	Motor_1.v_start = 1.5f; 				// min 0.2 - max 1.5  --> 10ms
+	Motor_1.interval = 1000;	//tmp idozitesi ido
+
 }
 
 void my_main_loop(void)
 {
+
+//motor_1_main(&Motor_1 , 0, 0);
+
+//motor_1_set_0_pos(&Motor_1);
+
+// pwm duty --> minden lépésnél frisíteni ( currnt pos függvényében)
+// d_t --> időzítés értéke --> main ban figyeljük --> lefut update timer
+
+
+
+
 	/*
 	reset_f = control_board_main();
 
@@ -109,3 +131,12 @@ void my_main_loop(void)
 	}*/
 }
 
+void motor_refresh_IT(void)			// 1 ms időzítés
+{
+	static uint32_t Motor_Tick = 0;
+	Motor_Tick++;
+
+	Motor_1.current_time = Motor_Tick;
+	motor_1_update_timer(&Motor_1);
+
+}
