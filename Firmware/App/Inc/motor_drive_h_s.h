@@ -36,6 +36,8 @@ typedef struct
 	uint32_t interval;
 	// microstep cuccok
 	int16_t microstep_pos;
+	uint8_t pin_1;
+	uint8_t pin_2;
 
 } MOTOR_TypeDef;
 

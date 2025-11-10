@@ -123,8 +123,8 @@ void motor_1_update_timer(MOTOR_TypeDef *Motor)
 	int16_t microstep_pos_2 = ((Motor->microstep_pos) + 8);
 	if(microstep_pos_2 > 31) microstep_pos_2 = microstep_pos_2 - 32;
 
-	set_pwm_duty(0, microstep_values[Motor->microstep_pos]);
-	set_pwm_duty(1, microstep_values[microstep_pos_2]);
+	set_pwm_duty(Motor->pin_1, microstep_values[Motor->microstep_pos]);
+	set_pwm_duty(Motor->pin_2, microstep_values[microstep_pos_2]);
 
 	if ((!Motor->current_level) && Motor->motor_enable)			// ha lenull�z�dott a sebess�g
 	{

@@ -163,7 +163,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_4);
 
-  //HAL_UART_Receive_IT(&huart1, &rx_buffer, 1);
+  HAL_UART_Receive_IT(&huart6, &rx_buffer, 1);
   //HAL_TIM_Base_Start_IT(&htim2);
   //HAL_TIM_Base_Start_IT(&htim5);
 
@@ -183,18 +183,7 @@ int main(void)
   while (1)
   {
 	  my_main_loop();
-	  	  tmp_leds(0);
-	  HAL_Delay(500);
-	  	  tmp_leds(2500);
-	  HAL_Delay(500);
-	  	  tmp_leds(5000);
-	  HAL_Delay(500);
-	  	  tmp_leds(7500);
-	  HAL_Delay(500);
-	  	  tmp_leds(10000);
-	  HAL_Delay(500);
-	  //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-	  //HAL_Delay(100);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -350,9 +339,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 1;
+  htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9999;
+  htim2.Init.Period = 3999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -409,9 +398,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 1;
+  htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 9999;
+  htim3.Init.Period = 3999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -480,9 +469,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 1;
+  htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 9999;
+  htim4.Init.Period = 3999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
@@ -551,9 +540,9 @@ static void MX_TIM5_Init(void)
 
   /* USER CODE END TIM5_Init 1 */
   htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 1;
+  htim5.Init.Prescaler = 0;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 9999;
+  htim5.Init.Period = 3999;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
@@ -656,9 +645,9 @@ static void MX_USART6_UART_Init(void)
 
   /* USER CODE END USART6_Init 1 */
   huart6.Instance = USART6;
-  huart6.Init.BaudRate = 115200;
+  huart6.Init.BaudRate = 250000;
   huart6.Init.WordLength = UART_WORDLENGTH_8B;
-  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.StopBits = UART_STOPBITS_2;
   huart6.Init.Parity = UART_PARITY_NONE;
   huart6.Init.Mode = UART_MODE_TX_RX;
   huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
@@ -790,16 +779,31 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)			// gombok interrupt callback
 {
 	ISR_GPIO_EXTI_Callback(GPIO_Pin);
 }*/
-/*
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if (huart->Instance == USART1)						// usart 1 receive
+	static uint32_t current_time = 0;
+	static uint32_t prev_time = 0;
+	static uint32_t interval = 10;
+
+	if (huart->Instance == USART6)						// usart 1 receive
 	{
-		usart_rx_callback(rx_buffer);					// --> dmx_usart, feldolgozás
-		HAL_UART_Receive_IT(&huart1, &rx_buffer, 1);	// start IT
+
+		current_time = HAL_GetTick();
+
+		if ((uint32_t)(current_time - prev_time)>= interval)
+		{
+			usart_rx_fe_callback(); // ha ido nagyobb mint 7
+		}else
+		{
+			usart_rx_callback(rx_buffer);
+		}
+
+		prev_time = current_time;
+		HAL_UART_Receive_IT(&huart6, &rx_buffer, 1);	// start IT
 	}
 }
-
+/*
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == USART1)						// usart 1 error callback
