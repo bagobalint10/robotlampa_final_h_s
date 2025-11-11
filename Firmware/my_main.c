@@ -72,12 +72,13 @@ static void dmx_channel_map(void)
 
 	float tmp;
 
+
 	speed_1 = 1.5f;
-	speed_2 = 2.0f;
+	speed_2 = 5.0f;
 	speed_3 = 5.0f;
 	speed_4 = 0.5f;
 	speed_5 = 1.5f;
-	speed_6 = 2.0f;
+	speed_6 = 5.0f;
 	speed_7 = 1.5f;
 	speed_8 = 1.5f;
 
@@ -86,7 +87,7 @@ static void dmx_channel_map(void)
 	pos_3 = (int16_t)dmx_array[3];
 	pos_4 = (int16_t)dmx_array[4];
 	pos_5 = (int16_t)dmx_array[5];
-	//pos_6 = (uint16_t)dmx_array[6]; strobe
+	pos_6 = (int16_t)dmx_array[6]; //strobe
 	pos_7 = (int16_t)dmx_array[7];
 	pos_8 = (int16_t)dmx_array[8];
 
@@ -98,15 +99,69 @@ static void dmx_channel_map(void)
 	tmp = 335.0f/255.0f;
 	tmp *= pos_5;
 	pos_5 = (int16_t)tmp;
-	// dimm
-	uint8_t tmp_pos = pos_2;
-	tmp = 100.0f/255.0f;
-	tmp *= pos_2;
-	pos_2 = (int16_t)tmp;
 
-	tmp = 75.0f/255.0f;
-	tmp *= tmp_pos;
-	pos_6 = (int16_t)tmp;
+	// strobe 6 pos alapján --> pos 2
+	// 1-10 hz
+	uint8_t tmp_pos;
+	uint8_t tmp_pos_6;
+	static uint32_t strobe_interval;
+	static uint32_t current_time = 0;
+	static uint32_t prev_time = 0;
+	static uint8_t strobe_f = 0;
+
+	//tmp_pos = pos_2;
+	// dimm pos_2 alapján
+		tmp_pos_6 = pos_6;
+		tmp_pos = pos_2;
+		tmp = 100.0f/255.0f;
+		tmp *= pos_2;
+		pos_2 = (int16_t)tmp;
+
+		tmp = 75.0f/255.0f;
+		tmp *= tmp_pos;
+		pos_6 = (int16_t)tmp;
+
+
+	if(tmp_pos_6 >55) // pos 2 őt változtatni
+	{
+		tmp = 9.0f/201.0f;
+		tmp *= ((float)tmp_pos_6-55.0f);
+		tmp += 1.0f;
+
+		current_time = HAL_GetTick();
+		strobe_interval = (uint32_t)(100.0f * (11.0f - tmp));
+
+		if ((uint32_t)(current_time - prev_time)>= strobe_interval)
+		{
+			prev_time = current_time;
+			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			strobe_f = 1;
+
+		}
+
+		if(strobe_f && (Motor_2.current_pos == (pos_2 + 100))) // ha odaért1
+		{
+			strobe_f = 0;
+		}
+
+		if(!strobe_f)
+		{
+			pos_2 = 0;
+			pos_6 = 0;
+		}
+	}
+	else
+	{
+
+	}
+			// 1-10 ig
+
+
+
+
+
+
+
 	// prism rotate
 	tmp_pos = pos_3;
 	if(pos_3 > 55)
@@ -232,9 +287,22 @@ static void reset_fgv(void)
 	if(((hall_2_edge & 0x03 ) == 0x02) && !motor_4_reset_f)	// lefuto el prism
 	{
 		motor_1_set_0_pos(&Motor_4);
-		pos_4 = 0;
+		pos_4 = 100;
 		motor_4_reset_f = 1;
 	}
+	else if((motor_4_reset_f == 1) && (Motor_4.current_pos == 200))
+	{
+		// ==200
+		pos_4 = -3000;
+		motor_4_reset_f = 2;
+	}
+	else if(((hall_2_edge & 0x03 ) == 0x02) && (motor_4_reset_f == 2))	// lefuto el prism
+	{
+		motor_1_set_0_pos(&Motor_4);
+		pos_4 = 0;
+		motor_4_reset_f = 3;
+	}
+
 
 	if(((hall_1_edge & 0x03 ) == 0x02) && !motor_7_reset_f)	// lefuto el gobo
 	{
@@ -287,7 +355,7 @@ static void reset_fgv(void)
 
 		// léptetés run ba
 	}
-	if(motor_2_reset_f && motor_8_reset_f && motor_1_reset_f)
+	if(motor_2_reset_f && motor_8_reset_f && motor_1_reset_f &&  (motor_4_reset_f == 3))
 	{
 		reset = 0;
 	}

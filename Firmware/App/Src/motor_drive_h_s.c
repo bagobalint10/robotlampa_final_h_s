@@ -141,6 +141,7 @@ void motor_1_main(MOTOR_TypeDef *Motor, int16_t dmx_pos_1, float dmx_speed)
 	Motor->input_pos =((int32_t)dmx_pos_1 + ZERO_POS);		// beolvasott poz�ci�
 
 	motor_enable_buf = Motor->motor_enable;
+	//calculate_speed(Motor, dmx_speed);
 
 		//n tim_state = tim_2_get_value(); 					// kiolvasni a timer �rt�k�t
 
