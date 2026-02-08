@@ -5,18 +5,6 @@
  *      Author: bagob
  */
 
-/*	motor mapping
- *
- * 	motor_1		color_w		pin  0, 1
- * 	motor_2		shutter_1	pin  2, 3
- * 	motor_3		prism_rot	pin  4, 5
- * 	motor_4		prism 		pin  6, 7
- * 	motor_5		focus 		pin  8, 9
- * 	motor_6		shutter_2	pin  10, 11
- * 	motor_7		gobo_wheel	pin  12, 13
- * 	motor_8		gobo_rot	pin  14, 15
- */
-
 #include <my_main.h>
 
 #include "main.h"
@@ -25,12 +13,70 @@
 
 #define MAX_POS 100000UL
 
+typedef struct
+	{
+		int16_t pos;
+		float speed;
+		uint8_t motor_1_reset_f;
+
+	} Input_parameters;
+
+typedef struct
+	{
+		Input_parameters input_parameters;
+		MOTOR_TypeDef driver_parameters;
+
+	} Motors;
+
+enum  Motor_ids
+	{
+		MOTOR_1,
+		MOTOR_2,
+		MOTOR_3,
+		MOTOR_4,
+		MOTOR_5,
+		MOTOR_6,
+		MOTOR_7,
+		MOTOR_8,
+		MOTOR_COUNT
+	};
+
+enum Motor_limit_type
+	{
+		HALL_SENSOR,
+		BLOCKING
+	};
+
+typedef struct
+	{
+		char name[20];
+		uint8_t limit_type;
+		uint8_t pin1, pin2;
+		int max_speed;
+
+	} Motor_Config;
+
+static Motor_Config motor_config[MOTOR_COUNT] =
+{
+	[MOTOR_1] = {.name = "color_wheel", 	.limit_type = HALL_SENSOR, 	.pin1 = 0, 	.pin2 = 1, 	.max_speed = 200},
+	[MOTOR_2] = {.name = "shutter_1", 		.limit_type = BLOCKING, 	.pin1 = 2, 	.pin2 = 3, 	.max_speed = 25	},
+	[MOTOR_3] = {.name = "prism_rotate", 	.limit_type = BLOCKING,		.pin1 = 4, 	.pin2 = 5, 	.max_speed = 500},
+	[MOTOR_4] = {.name = "prism_switch", 	.limit_type = HALL_SENSOR, 	.pin1 = 6, 	.pin2 = 7, 	.max_speed = 50	},
+	[MOTOR_5] = {.name = "focus", 			.limit_type = BLOCKING, 	.pin1 = 8, 	.pin2 = 9, 	.max_speed = 100},
+	[MOTOR_6] = {.name = "shutter_2", 		.limit_type = BLOCKING, 	.pin1 = 11,	.pin2 = 10, .max_speed = 25	},
+	[MOTOR_7] = {.name = "gobo_wheel", 		.limit_type = HALL_SENSOR, 	.pin1 = 12, .pin2 = 13, .max_speed = 200},
+	[MOTOR_8] = {.name = "gobo_rotate", 	.limit_type = HALL_SENSOR, 	.pin1 = 14, .pin2 = 15, .max_speed = 200},
+
+};
+
+static Motors motors[MOTOR_COUNT] = {0};
+
 static MOTOR_TypeDef Motor_1 = {0};
 static MOTOR_TypeDef Motor_2 = {0};
-static MOTOR_TypeDef Motor_3 = {0};
+//static MOTOR_TypeDef Motor_3 = {0};
 static MOTOR_TypeDef Motor_4 = {0};
-static MOTOR_TypeDef Motor_5 = {0};
-static MOTOR_TypeDef Motor_6 = {0};
+//static MOTOR_TypeDef Motor_5 = {0};
+//static MOTOR_TypeDef Motor_6 = {0};
 static MOTOR_TypeDef Motor_7 = {0};
 static MOTOR_TypeDef Motor_8 = {0};
 
@@ -346,74 +392,28 @@ static void reset_fgv(void)
 
 void my_main_init(void)
 {
-	Motor_1.current_pos = 100;
-	Motor_2.current_pos = 1500;
-	Motor_3.current_pos = 100;
-	Motor_4.current_pos = 1500;
-	Motor_5.current_pos = 1500;
-	Motor_6.current_pos = 1500;
-	Motor_7.current_pos = 100;
-	Motor_8.current_pos = 100;
+	for(int i = MOTOR_1; i<MOTOR_COUNT; i++)
+	{
+		// common
+		motors[i].input_parameters.speed = 		0.5f;
+		motors[i].driver_parameters.interval = 	10;
 
-	Motor_1.interval = 10;
-	Motor_2.interval = 10;
-	Motor_3.interval = 10;
-	Motor_4.interval = 10;
-	Motor_5.interval = 10;
-	Motor_6.interval = 10;
-	Motor_7.interval = 10;
-	Motor_8.interval = 10;
+		// different
+		motors[i].driver_parameters.pin_1 = motor_config[i].pin1;
+		motors[i].driver_parameters.pin_2 = motor_config[i].pin2;
+		motors[i].driver_parameters.n_max = motor_config[i].max_speed;
 
-
-	Motor_1.n_max = 200;
-	Motor_1.pin_1 = 0;
-	Motor_1.pin_2 = 1;
-
-	Motor_2.n_max = 25;
-	Motor_2.pin_1 = 2;
-	Motor_2.pin_2 = 3;
-
-	Motor_3.n_max = 500;
-	Motor_3.pin_1 = 4;
-	Motor_3.pin_2 = 5;
-
-	Motor_4.n_max = 50;
-	Motor_4.pin_1 = 6;
-	Motor_4.pin_2 = 7;
-
-	Motor_5.n_max = 100;
-	Motor_5.pin_1 = 8;
-	Motor_5.pin_2 = 9;
-
-	Motor_6.n_max = 25;
-	Motor_6.pin_1 = 11;
-	Motor_6.pin_2 = 10;
-
-	Motor_7.n_max = 200;
-	Motor_7.pin_1 = 12;
-	Motor_7.pin_2 = 13;
-
-	Motor_8.n_max = 200;
-	Motor_8.pin_1 = 14;
-	Motor_8.pin_2 = 15;
-
-	pos_1 = -3000;
-	pos_2 = 0;
-	pos_3 = 0;
-	pos_4 = 0;
-	pos_5 = 0;
-	pos_6 = 0;
-	pos_7 = -3000;
-	pos_8 = -3000;
-
-	speed_1 = 0.5f;
-	speed_2 = 0.5f;
-	speed_3 = 0.5f;
-	speed_4 = 0.5f;
-	speed_5 = 0.5f;
-	speed_6 = 0.5f;
-	speed_7 = 0.5f;
-	speed_8 = 0.5f;
+		if(motor_config[i].limit_type == HALL_SENSOR)
+		{
+			motors[i].driver_parameters.current_pos = 100;
+			motors[i].input_parameters.pos = -3000;
+		}
+		else
+		{
+			motors[i].driver_parameters.current_pos = 1500;
+			motors[i].input_parameters.pos = 0;
+		}
+	}
 }
 
 void my_main_loop(void)
@@ -427,14 +427,10 @@ void my_main_loop(void)
 		dmx_channel_map();
 	}
 
-	motor_1_main(&Motor_1 , pos_1, speed_1);	// colorw
-	motor_1_main(&Motor_2 , pos_2, speed_2);	// shutter_1
-	motor_1_main(&Motor_3 , pos_3, speed_3);	// prizrot
-	motor_1_main(&Motor_4 , pos_4, speed_4);	// priz
-	motor_1_main(&Motor_5 , pos_5, speed_5);	// focus
-	motor_1_main(&Motor_6 , pos_6, speed_6);	// shutter2
-	motor_1_main(&Motor_7 , pos_7, speed_7);	// gobo
-	motor_1_main(&Motor_8 , pos_8, speed_8);	// goborot
+	for (int i = MOTOR_1; i < MOTOR_COUNT; i++)
+	{
+		motor_1_main(&motors[i].driver_parameters, motors[i].input_parameters.pos, motors[i].input_parameters.speed);
+	}
 }
 
 void motor_refresh_IT(void)
@@ -442,21 +438,9 @@ void motor_refresh_IT(void)
 	static uint32_t Motor_Tick = 0;
 	Motor_Tick++;
 
-	Motor_1.current_time = Motor_Tick;
-	Motor_2.current_time = Motor_Tick;
-	Motor_3.current_time = Motor_Tick;
-	Motor_4.current_time = Motor_Tick;
-	Motor_5.current_time = Motor_Tick;
-	Motor_6.current_time = Motor_Tick;
-	Motor_7.current_time = Motor_Tick;
-	Motor_8.current_time = Motor_Tick;
-
-	motor_1_update_timer(&Motor_1);
-	motor_1_update_timer(&Motor_2);
-	motor_1_update_timer(&Motor_3);
-	motor_1_update_timer(&Motor_4);
-	motor_1_update_timer(&Motor_5);
-	motor_1_update_timer(&Motor_6);
-	motor_1_update_timer(&Motor_7);
-	motor_1_update_timer(&Motor_8);
+	for (int i = MOTOR_1; i < MOTOR_COUNT; i++)
+	{
+		motors[i].driver_parameters.current_time = Motor_Tick;
+		motor_1_update_timer(&motors[i].driver_parameters);
+	}
 }
